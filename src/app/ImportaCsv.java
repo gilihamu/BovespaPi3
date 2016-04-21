@@ -6,20 +6,26 @@
 package app;
 
 import au.com.bytecode.opencsv.CSVReader;
+import dao.ArquivoDao;
 import dao.EmpresaDao;
+import entidade.Arquivo;
 import entidade.Empresa;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sound.midi.MidiDevice;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 
 /**
  *
@@ -33,11 +39,14 @@ public class ImportaCsv extends javax.swing.JFrame {
     JFileChooser jfc;
     String log;
     EmpresaDao empresaDao = new EmpresaDao();
+    ArquivoDao arquivoDao = new ArquivoDao();
     DefaultComboBoxModel combomodel;
+    private DefaultTableModel model;
 
     public ImportaCsv() {
         initComponents();
         carregaComboBoxEmpresa();
+        initTela();
         this.jProgressBar1.setVisible(false);
 
     }
@@ -58,6 +67,7 @@ public class ImportaCsv extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
         cbxEmpresa = new javax.swing.JComboBox<>();
+        btProcessar = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -76,7 +86,7 @@ public class ImportaCsv extends javax.swing.JFrame {
             }
         });
 
-        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/Document.png"))); // NOI18N
+        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/Save.png"))); // NOI18N
         jButton3.setText("Importar");
         jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -95,6 +105,15 @@ public class ImportaCsv extends javax.swing.JFrame {
         cbxEmpresa.setToolTipText("");
         cbxEmpresa.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
+        btProcessar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/Save-icon.png"))); // NOI18N
+        btProcessar.setText("Procesar");
+        btProcessar.setEnabled(false);
+        btProcessar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btProcessarActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -103,29 +122,31 @@ public class ImportaCsv extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jButton3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(btProcessar, javax.swing.GroupLayout.DEFAULT_SIZE, 137, Short.MAX_VALUE))
                     .addComponent(cbxEmpresa, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(TxtArquivo, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btArquivo)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(TxtArquivo, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(btArquivo))
+                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btArquivo)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(TxtArquivo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(cbxEmpresa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(TxtArquivo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cbxEmpresa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btArquivo))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton3)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btProcessar, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         cbxEmpresa.getAccessibleContext().setAccessibleName("");
@@ -135,17 +156,17 @@ public class ImportaCsv extends javax.swing.JFrame {
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
             },
             new String [] {
-                "nome", "Data da Importacao", "Local"
+                "Id", "Data da Importacao", "nome", "Local", "Status"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, true
+                true, false, false, true, true
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -164,15 +185,13 @@ public class ImportaCsv extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jProgressBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addGap(22, 22, 22)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 375, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 518, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 375, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 143, Short.MAX_VALUE)))
-                .addContainerGap())
+                    .addComponent(jScrollPane1))
+                .addContainerGap(30, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -182,10 +201,10 @@ public class ImportaCsv extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 59, Short.MAX_VALUE)
                 .addComponent(jProgressBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGap(22, 22, 22))
         );
 
         pack();
@@ -193,28 +212,23 @@ public class ImportaCsv extends javax.swing.JFrame {
 
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        this.jProgressBar1.setVisible(true);
-        new Thread(new BarraProcesso(this.jProgressBar1, 1)).start();
-         String razaoSocial = (String)cbxEmpresa.getModel().getSelectedItem();
-        
-        Empresa empresaSelecionada = empresaDao.pesquisaRzSocial(razaoSocial);
 
-        
-        CSVReader reader;
-        try {
-            reader = new CSVReader(new FileReader(jfc.getSelectedFile().getPath()));
+        if (validacao()) {
+            this.jProgressBar1.setVisible(true);
+            new Thread(new BarraProcesso(this.jProgressBar1, 1)).start();
+            String razaoSocial = (String) cbxEmpresa.getModel().getSelectedItem();
 
-            String[] nextLine;
-            while ((nextLine = reader.readNext()) != null) {
-                // nextLine[] is an array of values from the line
-                log = nextLine[0] + " - " + nextLine[1] + " - " + nextLine[2] + " - " + nextLine[3] + " - " + nextLine[4] + "\\n";
-                System.out.println(nextLine[0] + " - " + nextLine[1] + " - " + nextLine[2] + " - " + nextLine[3] + " - " + nextLine[4]);
-            }
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(ImportaCsv.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(ImportaCsv.class.getName()).log(Level.SEVERE, null, ex);
+            Empresa empresaSelecionada = empresaDao.pesquisaRzSocial(razaoSocial);
+            Arquivo arquivo = new Arquivo();
+            arquivo.setDataImportacao(new Date());
+            arquivo.setStatus("Pendente");
+            arquivo.setEmpresa(empresaSelecionada);
+            arquivo.setNOME(jfc.getSelectedFile().getAbsolutePath());
+            arquivoDao.persist(arquivo);
+            initTela();
+
         }
+
 
     }//GEN-LAST:event_jButton3ActionPerformed
 
@@ -229,7 +243,7 @@ public class ImportaCsv extends javax.swing.JFrame {
     }//GEN-LAST:event_jBotaoSelecionarArquivo
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
-        //obtenerEmpresa();
+        habilitaBotaoProcessar();
     }//GEN-LAST:event_jTable1MouseClicked
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -238,6 +252,10 @@ public class ImportaCsv extends javax.swing.JFrame {
 
 
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void btProcessarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btProcessarActionPerformed
+        processaArquivo();
+    }//GEN-LAST:event_btProcessarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -277,6 +295,7 @@ public class ImportaCsv extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     javax.swing.JTextField TxtArquivo;
     javax.swing.JButton btArquivo;
+    javax.swing.JButton btProcessar;
     javax.swing.JComboBox<String> cbxEmpresa;
     javax.swing.JButton jButton1;
     javax.swing.JButton jButton3;
@@ -295,13 +314,105 @@ public class ImportaCsv extends javax.swing.JFrame {
         List<Empresa> empresas = (List<Empresa>) empresaDao.findAll();
 
         for (Empresa empresa : empresas) {
-            
+
             combomodel.addElement(empresa.getRazaoSocial());
-            
+
         }
         System.out.println("" + combomodel.getSize());
         cbxEmpresa.setModel(combomodel);
         //cbxEmpresa.setName(comb);
 
     }
+
+    private Boolean validacao() {
+
+        boolean ok = true;
+        if (this.TxtArquivo.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Não foi escolido nehum aruqivo.");
+            ok = false;
+        }
+        if (this.cbxEmpresa.getSelectedIndex() == -1) {
+            JOptionPane.showMessageDialog(null, "Favor selecionar a Empresa.");
+            ok = false;
+        }
+        return ok;
+    }
+
+    public void tableModel() {
+        this.jTable1.getColumnModel().getColumn(0).setPreferredWidth(25);
+        this.jTable1.getColumnModel().getColumn(1).setPreferredWidth(100);
+        this.jTable1.getColumnModel().getColumn(2).setPreferredWidth(100);
+        this.jTable1.getColumnModel().getColumn(3).setPreferredWidth(200);
+        this.jTable1.getColumnModel().getColumn(4).setPreferredWidth(100);
+
+        model = (DefaultTableModel) this.jTable1.getModel();
+        model.setNumRows(0);
+    }
+
+    public void cargarTabla() {
+
+        List<Arquivo> lista = (List<Arquivo>) arquivoDao.findAll();
+        for (Arquivo arquivo : lista) {
+            model.addRow(new Object[]{
+                arquivo.getId(), arquivo.getDataImportacao(),
+                arquivo.getEmpresa().getRazaoSocial(), arquivo.getNOME(),
+                arquivo.getStatus()
+            });
+        }
+    }
+
+    private void limpaCampo() {
+        this.TxtArquivo.setText(null);
+        this.cbxEmpresa.setSelectedIndex(0);
+        this.btProcessar.setEnabled(false);
+
+    }
+
+    private void initTela() {
+        tableModel();
+        cargarTabla();
+        limpaCampo();
+    }
+
+    private void habilitaBotaoProcessar() {
+        btProcessar.setEnabled(true);
+    }
+
+    private void processaArquivo() {
+        boolean erro = false;
+        CSVReader reader;
+        int selectedRow = this.jTable1.getSelectedRow();
+        Object valueAt = model.getValueAt(selectedRow, 0);
+        Integer idArt = Integer.parseInt(valueAt.toString());
+        Arquivo arquivo = arquivoDao.getById(idArt);
+        if (arquivo == null) {
+            JOptionPane.showMessageDialog(null, "Registro inexistente");
+        }
+
+        try {
+
+            System.out.println("Importando arquivo da empresa " + arquivo.getEmpresa().getRazaoSocial());
+            reader = new CSVReader(new FileReader(arquivo.getNOME()));
+
+            String[] nextLine;
+            while ((nextLine = reader.readNext()) != null) {
+                // nextLine[] is an array of values from the line
+                log = nextLine[0] + " - " + nextLine[1] + " - " + nextLine[2] + " - " + nextLine[3] + " - " + nextLine[4] + "\\n";
+                System.out.println(nextLine[0] + " - " + nextLine[1] + " - " + nextLine[2] + " - " + nextLine[3] + " - " + nextLine[4]);
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(ImportaCsv.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(ImportaCsv.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        if (!erro) {
+            arquivo.setStatus("Importado");
+            arquivoDao.merge(arquivo);
+            initTela();
+            JOptionPane.showMessageDialog(null, "Arquivo processado com Sucesso!.","Importacao",1);
+                  
+        }
+    }
+
 }
